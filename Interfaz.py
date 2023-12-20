@@ -26,10 +26,21 @@ class Config:
     @classmethod
     def save_config(cls):
         with open(cls.config_file_path, "w") as file:
-            file.write(f"folder_facturadas_prosegur={cls.folder_facturadas_prosegur}\n")
-            file.write(f"folder_nofacturadas_prosegur={cls.folder_nofacturadas_prosegur}\n")
-            file.write(f"folder_facturadas_brinks={cls.folder_facturadas_brinks}\n")
-            file.write(f"folder_nofacturadas_brinks={cls.folder_nofacturadas_brinks}\n")
+            file.write(f"folder_nofacturadas_prosegur={cls.folder_facturadas_prosegur}\n")
+            file.write(f"folder_facturadas_prosegur={cls.folder_nofacturadas_prosegur}\n")
+            file.write(f"folder_nofacturadas_brinks={cls.folder_facturadas_brinks}\n")
+            file.write(f"folder_facturadas_brinks={cls.folder_nofacturadas_brinks}\n")
+
+    @classmethod
+    def update_config(cls, folder_facturadas_prosegur, folder_nofacturadas_prosegur,
+                      folder_facturadas_brinks, folder_nofacturadas_brinks):
+        cls.folder_facturadas_prosegur = folder_facturadas_prosegur
+        cls.folder_nofacturadas_prosegur = folder_nofacturadas_prosegur
+        cls.folder_facturadas_brinks = folder_facturadas_brinks
+        cls.folder_nofacturadas_brinks = folder_nofacturadas_brinks
+
+        # Save the updated configuration
+        cls.save_config()
 
 class FileMoverApp:
     def __init__(self, root):
@@ -57,28 +68,29 @@ class FileMoverApp:
     def seleccionar_facturadas_prosegur(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
-            Config.folder_facturadas_prosegur = folder_selected
+            Config.update_config(folder_facturadas_prosegur=folder_selected)
             Config.save_config()
             self.actualizar_lista_prosegur()
+
 
     def seleccionar_nofacturadas_prosegur(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
-            Config.folder_nofacturadas_prosegur = folder_selected
+            Config.update_config(folder_nofacturadas_prosegur=folder_selected)
             Config.save_config()
             self.actualizar_lista_prosegur()
 
     def seleccionar_facturadas_brinks(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
-            Config.folder_facturadas_brinks = folder_selected
+            Config.update_config(folder_facturadas_brinks=folder_selected)
             Config.save_config()
             self.actualizar_lista_brinks()
 
     def seleccionar_nofacturadas_brinks(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
-            Config.folder_nofacturadas_brinks = folder_selected
+            Config.update_config(folder_nofacturadas_brinks=folder_selected)
             Config.save_config()
             self.actualizar_lista_brinks()
 
@@ -223,13 +235,44 @@ class FileMoverAppSpecific:
         folder_selected = filedialog.askdirectory()
         if folder_selected:
             self.folder_facturadas = folder_selected
+            if self.company_name.lower() == "prosegur":
+                Config.update_config(
+                    folder_facturadas_prosegur=self.folder_facturadas,
+                    folder_nofacturadas_prosegur=Config.folder_nofacturadas_prosegur,
+                    folder_facturadas_brinks=Config.folder_facturadas_brinks,
+                    folder_nofacturadas_brinks=Config.folder_nofacturadas_brinks
+                )
+            elif self.company_name.lower() == "brinks":
+                Config.update_config(
+                    folder_facturadas_prosegur=Config.folder_facturadas_prosegur,
+                    folder_nofacturadas_prosegur=Config.folder_nofacturadas_prosegur,
+                    folder_facturadas_brinks=self.folder_facturadas,
+                    folder_nofacturadas_brinks=Config.folder_nofacturadas_brinks
+                )
+            Config.save_config()  # Save the updated configuration
             self.actualizar_lista()
 
     def seleccionar_nofacturadas(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
             self.folder_nofacturadas = folder_selected
+            if self.company_name.lower() == "prosegur":
+                Config.update_config(
+                    folder_facturadas_prosegur=Config.folder_facturadas_prosegur,
+                    folder_nofacturadas_prosegur=self.folder_nofacturadas,
+                    folder_facturadas_brinks=Config.folder_facturadas_brinks,
+                    folder_nofacturadas_brinks=Config.folder_nofacturadas_brinks
+                )
+            elif self.company_name.lower() == "brinks":
+                Config.update_config(
+                    folder_facturadas_prosegur=Config.folder_facturadas_prosegur,
+                    folder_nofacturadas_prosegur=Config.folder_nofacturadas_prosegur,
+                    folder_facturadas_brinks=Config.folder_facturadas_brinks,
+                    folder_nofacturadas_brinks=self.folder_nofacturadas
+                )
+            Config.save_config()  # Save the updated configuration
             self.actualizar_lista()
+
 
     def load_folders_from_config(self):
         # Cargar carpetas específicas de Prosegur o Brinks desde la configuración
@@ -348,9 +391,24 @@ class FileMoverAppSpecific:
             # Obtener el nombre del archivo seleccionado
             file_name = widget.get(selected_index[0])
 
+            # Obtener la carpeta correcta según la lista
+            if widget is self.listbox_facturadas:
+                folder_path = self.folder_facturadas
+            elif widget is self.listbox_nofacturadas:
+                folder_path = self.folder_nofacturadas
+            else:
+                return
+
             # Abrir el archivo
-            file_path = os.path.join(self.folder_facturadas, file_name)
-            os.system(f'start {file_path}')
+            file_path = os.path.join(folder_path, file_name)
+
+            # Usar el método adecuado según la plataforma para abrir el archivo
+            try:
+                os.startfile(file_path)  # Para Windows
+            except AttributeError:
+                # En sistemas no Windows, utilizar 'open' de acuerdo al tipo de archivo
+                import subprocess
+                subprocess.run(['open', file_path], check=True)
 
     def center_window(self):
         # Obtener dimensiones de la pantalla
