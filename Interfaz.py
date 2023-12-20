@@ -3,6 +3,7 @@ import shutil
 import tkinter as tk
 from tkinter import ttk, Listbox, messagebox, filedialog, Label, Scrollbar, MULTIPLE
 from fnmatch import fnmatch
+from datetime import datetime
 
 class Config:
     config_file_path = "config.txt"
@@ -202,8 +203,8 @@ class FileMoverAppSpecific:
         btn_search.grid(row=10, column=2, padx=10, pady=10)
         btn_borrar_seleccion_facturadas.grid(row=3, column=1, padx=10, pady=10)
         btn_borrar_seleccion_nofacturadas.grid(row=3, column=2, padx=10, pady=10)
-        btn_seleccionar_todas_facturadas.grid(row=4, column=1, padx=10, pady=10)
-        btn_seleccionar_todas_nofacturadas.grid(row=4, column=2, padx=10, pady=10)
+        btn_seleccionar_todas_facturadas.grid(row=5, column=1, padx=10, pady=10)
+        btn_seleccionar_todas_nofacturadas.grid(row=5, column=2, padx=10, pady=10)
         btn_actualizar.grid(row=10, column=3, padx=10, pady=10)
         btn_seleccionar_facturadas.grid(row=5, column=0, padx=10, pady=10)
         btn_seleccionar_nofacturadas.grid(row=5, column=3, padx=10, pady=10)
@@ -211,6 +212,15 @@ class FileMoverAppSpecific:
         # Configurar scrollbars
         scrollbar_facturadas = Scrollbar(self.root, orient='vertical', command=self.listbox_facturadas.yview)
         scrollbar_nofacturadas = Scrollbar(self.root, orient='vertical', command=self.listbox_nofacturadas.yview)
+
+        scrollbar_facturadas_x = Scrollbar(self.root, orient='horizontal', command=self.listbox_facturadas.xview)
+        scrollbar_nofacturadas_x = Scrollbar(self.root, orient='horizontal', command=self.listbox_nofacturadas.xview)
+
+        self.listbox_facturadas.config(xscrollcommand=scrollbar_facturadas_x.set)
+        self.listbox_nofacturadas.config(xscrollcommand=scrollbar_nofacturadas_x.set)
+
+        scrollbar_facturadas_x.grid(row=4, column=0, columnspan=3, sticky='ew')
+        scrollbar_nofacturadas_x.grid(row=4, column=3, columnspan=3, sticky='ew')
 
         self.listbox_facturadas.config(yscrollcommand=scrollbar_facturadas.set)
         self.listbox_nofacturadas.config(yscrollcommand=scrollbar_nofacturadas.set)
@@ -253,7 +263,10 @@ class FileMoverAppSpecific:
 
             # Agregar archivos a la lista
             for file in files:
-                listbox.insert(tk.END, file)
+                file_path = os.path.join(folder, file)
+                file_date = datetime.fromtimestamp(os.path.getmtime(file_path))
+                formatted_date = file_date.strftime('%Y-%m-%d %H:%M:%S')
+                listbox.insert(tk.END, f"{file} ({formatted_date})")
 
     def seleccionar_facturadas(self):
         folder_selected = filedialog.askdirectory()
@@ -398,7 +411,6 @@ class FileMoverAppSpecific:
         listbox.select_set(0, tk.END)
 
     def actualizar_lista(self):
-        # Actualizar la lista de archivos en facturadas
         self.listbox_facturadas.delete(0, tk.END)
         self.load_files_into_listbox(self.folder_facturadas, self.listbox_facturadas)
 
