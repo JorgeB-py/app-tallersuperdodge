@@ -1,4 +1,0 @@
-folder_nofacturadas_prosegur=
-folder_facturadas_prosegur=
-folder_nofacturadas_brinks=C:/Users/jorgi/OneDrive/Escritorio/app-tallersuperdodge/nofacturadas_brinks
-folder_facturadas_brinks=

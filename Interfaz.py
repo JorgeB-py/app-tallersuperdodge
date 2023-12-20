@@ -160,6 +160,10 @@ class FileMoverAppSpecific:
         btn_seleccionar_facturadas = ttk.Button(self.root, text="Seleccionar No Facturadas", command=self.seleccionar_facturadas)
         btn_seleccionar_nofacturadas = ttk.Button(self.root, text="Seleccionar Facturadas", command=self.seleccionar_nofacturadas)
 
+        # Botón para eliminar archivos seleccionados
+        btn_eliminar_seleccion = ttk.Button(self.root, text="Eliminar Archivos", command=self.eliminar_seleccion)
+        btn_eliminar_seleccion.grid(row=3, column=5, padx=10, pady=10)
+
         # Crear botones de flechas y botón de guardar
         btn_right = ttk.Button(self.root, text="<-", command=self.move_files_right)
         btn_left = ttk.Button(self.root, text="->", command=self.move_files_left)
@@ -220,6 +224,26 @@ class FileMoverAppSpecific:
 
         # Centrar la interfaz en la pantalla
         self.center_window()
+
+    def eliminar_seleccion(self):
+        # Obtener los índices seleccionados en ambas listas
+        indices_facturadas = self.listbox_facturadas.curselection()
+        indices_nofacturadas = self.listbox_nofacturadas.curselection()
+
+        # Eliminar archivos seleccionados en la lista de facturadas
+        for index in reversed(indices_facturadas):
+            file_name = self.listbox_facturadas.get(index)
+            file_path = os.path.join(self.folder_facturadas, file_name)
+            os.remove(file_path)
+
+        # Eliminar archivos seleccionados en la lista de nofacturadas
+        for index in reversed(indices_nofacturadas):
+            file_name = self.listbox_nofacturadas.get(index)
+            file_path = os.path.join(self.folder_nofacturadas, file_name)
+            os.remove(file_path)
+
+        # Actualizar las listas después de eliminar los archivos
+        self.actualizar_lista()
 
     def load_files_into_listbox(self, folder, listbox):
         # Verificar si la carpeta existe
