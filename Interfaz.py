@@ -146,11 +146,11 @@ class FileMoverAppSpecific:
         # Utilizar el estilo ttk para obtener un aspecto más moderno
         style = ttk.Style()
         style.configure('TButton', font=('calibri', 14, 'bold'), borderwidth='4')
-        style.configure('TListbox', font=('calibri', 16), borderwidth='2', relief='sunken')  # Ajusta el tamaño de la fuente
+        style.configure('TListbox', font=('calibri', 12), borderwidth='2', relief='sunken')  # Ajusta el tamaño de la fuente
         style.configure('TEntry', font=('calibri', 14), borderwidth='2', relief='sunken')
 
-        self.listbox_facturadas = Listbox(self.root, selectmode=MULTIPLE, height=20, width=35, font=('calibri', 16))
-        self.listbox_nofacturadas = Listbox(self.root, selectmode=MULTIPLE, height=20, width=35, font=('calibri', 16))
+        self.listbox_facturadas = Listbox(self.root, selectmode=MULTIPLE, height=20, width=35, font=('calibri', 12))
+        self.listbox_nofacturadas = Listbox(self.root, selectmode=MULTIPLE, height=20, width=35, font=('calibri', 12))
 
         # Agregar archivos de ejemplo a las listas
         self.load_files_into_listbox(self.folder_facturadas, self.listbox_facturadas)
