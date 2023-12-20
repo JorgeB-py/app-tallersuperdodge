@@ -1,10 +1,39 @@
 import os
 import shutil
 import tkinter as tk
-from tkinter import ttk, Listbox, Button, messagebox, Entry, Label, Scrollbar, MULTIPLE
+from tkinter import ttk, Listbox, messagebox, filedialog, Label, Scrollbar, MULTIPLE
+from fnmatch import fnmatch
+
+class Config:
+    config_file_path = "config.txt"
+    folder_facturadas_prosegur = ""
+    folder_nofacturadas_prosegur = ""
+    folder_facturadas_brinks = ""
+    folder_nofacturadas_brinks = ""
+
+    @classmethod
+    def load_config(cls):
+        if os.path.exists(cls.config_file_path):
+            with open(cls.config_file_path, "r") as file:
+                lines = file.readlines()
+                for line in lines:
+                    key, value = line.strip().split("=")
+                    setattr(cls, key, value)
+        else:
+            # Create the config file with default values if it doesn't exist
+            cls.save_config()
+
+    @classmethod
+    def save_config(cls):
+        with open(cls.config_file_path, "w") as file:
+            file.write(f"folder_facturadas_prosegur={cls.folder_facturadas_prosegur}\n")
+            file.write(f"folder_nofacturadas_prosegur={cls.folder_nofacturadas_prosegur}\n")
+            file.write(f"folder_facturadas_brinks={cls.folder_facturadas_brinks}\n")
+            file.write(f"folder_nofacturadas_brinks={cls.folder_nofacturadas_brinks}\n")
 
 class FileMoverApp:
     def __init__(self, root):
+        Config.load_config()  # Cargar la configuración desde el archivo
         self.root = root
         self.root.title("File Mover App")
         self.init_main_ui()
@@ -16,26 +45,64 @@ class FileMoverApp:
         style.configure('TListbox', font=('calibri', 14), borderwidth='2', relief='sunken')
 
         # Interfaz principal con dos botones
-        btn_brinks = ttk.Button(self.root, text="Brinks", command=lambda: self.open_interface("Brinks"))
-        btn_prosegur = ttk.Button(self.root, text="Prosegur", command=lambda: self.open_interface("Prosegur"))
+        btn_prosegur = ttk.Button(self.root, text="Prosegur", command=lambda: self.open_interface_prosegur())
+        btn_brinks = ttk.Button(self.root, text="Brinks", command=lambda: self.open_interface_brinks())
 
         # Colocar botones en la interfaz principal
-        btn_brinks.grid(row=0, column=0, padx=10, pady=10)
-        btn_prosegur.grid(row=0, column=1, padx=10, pady=10)
+        btn_prosegur.grid(row=0, column=0, padx=10, pady=10)
+        btn_brinks.grid(row=0, column=1, padx=10, pady=10)
 
         # Centrar la interfaz en la pantalla
         self.center_window()
+    def seleccionar_facturadas_prosegur(self):
+        folder_selected = filedialog.askdirectory()
+        if folder_selected:
+            Config.folder_facturadas_prosegur = folder_selected
+            Config.save_config()
+            self.actualizar_lista_prosegur()
 
-    def open_interface(self, company_name):
+    def seleccionar_nofacturadas_prosegur(self):
+        folder_selected = filedialog.askdirectory()
+        if folder_selected:
+            Config.folder_nofacturadas_prosegur = folder_selected
+            Config.save_config()
+            self.actualizar_lista_prosegur()
+
+    def seleccionar_facturadas_brinks(self):
+        folder_selected = filedialog.askdirectory()
+        if folder_selected:
+            Config.folder_facturadas_brinks = folder_selected
+            Config.save_config()
+            self.actualizar_lista_brinks()
+
+    def seleccionar_nofacturadas_brinks(self):
+        folder_selected = filedialog.askdirectory()
+        if folder_selected:
+            Config.folder_nofacturadas_brinks = folder_selected
+            Config.save_config()
+            self.actualizar_lista_brinks()
+
+    def open_interface_prosegur(self):
         # Cerrar la interfaz principal
         self.root.destroy()
 
-        # Crear una nueva interfaz para la empresa específica
-        root_company = tk.Tk()
-        root_company.title(f"File Mover App - {company_name}")
-        app_company = FileMoverAppSpecific(root_company, f"facturadas_{company_name.lower()}", f"nofacturadas_{company_name.lower()}")
-        app_company.center_window()
-        root_company.mainloop()
+        # Crear una nueva interfaz para Prosegur
+        root_prosegur = tk.Tk()
+        root_prosegur.title("File Mover App - Prosegur")
+        app_prosegur = FileMoverAppSpecific(root_prosegur, "Prosegur")
+        app_prosegur.center_window()
+        root_prosegur.mainloop()
+
+    def open_interface_brinks(self):
+        # Cerrar la interfaz principal
+        self.root.destroy()
+
+        # Crear una nueva interfaz para Brinks
+        root_brinks = tk.Tk()
+        root_brinks.title("File Mover App - Brinks")
+        app_brinks = FileMoverAppSpecific(root_brinks, "Brinks")
+        app_brinks.center_window()
+        root_brinks.mainloop()
 
     def center_window(self):
         # Centrar la ventana en la pantalla
@@ -47,12 +114,20 @@ class FileMoverApp:
         y = (screen_height - height) // 2
         self.root.geometry(f'{width}x{height}+{x}+{y}')
 
+    def actualizar_lista_prosegur(self):
+        messagebox.showinfo("Actualizado", "Lista de Prosegur actualizada.")
+
+    def actualizar_lista_brinks(self):
+        messagebox.showinfo("Actualizado", "Lista de Brinks actualizada.")
+
 class FileMoverAppSpecific:
-    def __init__(self, root, folder_facturadas, folder_nofacturadas):
+    def __init__(self, root, company_name):
         self.root = root
-        self.root.title("File Mover App - Specific")
-        self.folder_facturadas = folder_facturadas
-        self.folder_nofacturadas = folder_nofacturadas
+        self.root.title(f"File Mover App - {company_name}")
+        self.folder_facturadas = ""
+        self.folder_nofacturadas = ""
+        self.company_name = company_name  # Agregamos el nombre de la empresa
+        self.load_folders_from_config()  # Cargamos las carpetas desde la configuración
         self.init_ui()
 
     def init_ui(self):
@@ -62,12 +137,16 @@ class FileMoverAppSpecific:
         style.configure('TListbox', font=('calibri', 16), borderwidth='2', relief='sunken')  # Ajusta el tamaño de la fuente
         style.configure('TEntry', font=('calibri', 14), borderwidth='2', relief='sunken')
 
-        self.listbox_facturadas = Listbox(self.root, selectmode=MULTIPLE, height=25, width=40, font=('calibri', 16))
-        self.listbox_nofacturadas = Listbox(self.root, selectmode=MULTIPLE, height=25, width=40, font=('calibri', 16))
+        self.listbox_facturadas = Listbox(self.root, selectmode=MULTIPLE, height=20, width=35, font=('calibri', 16))
+        self.listbox_nofacturadas = Listbox(self.root, selectmode=MULTIPLE, height=20, width=35, font=('calibri', 16))
 
         # Agregar archivos de ejemplo a las listas
         self.load_files_into_listbox(self.folder_facturadas, self.listbox_facturadas)
         self.load_files_into_listbox(self.folder_nofacturadas, self.listbox_nofacturadas)
+
+        # Crear botones de selección de archivos
+        btn_seleccionar_facturadas = ttk.Button(self.root, text="Seleccionar No Facturadas", command=self.seleccionar_facturadas)
+        btn_seleccionar_nofacturadas = ttk.Button(self.root, text="Seleccionar Facturadas", command=self.seleccionar_nofacturadas)
 
         # Crear botones de flechas y botón de guardar
         btn_right = ttk.Button(self.root, text="<-", command=self.move_files_right)
@@ -76,6 +155,8 @@ class FileMoverAppSpecific:
         btn_back = ttk.Button(self.root, text="Volver", command=self.volver)
 
         # Etiquetas y entrada para el buscador
+        lbl_facturadas = Label(self.root, text="Cotizaciones-No Facturadas", font=('calibri', 14))
+        lbl_nofacturadas = Label(self.root, text="Cotizaciones-Facturadas", font=('calibri', 14))
         lbl_search = Label(self.root, text="Buscar:", font=('calibri', 14))
         self.entry_search = ttk.Entry(self.root, font=('calibri', 14))
         btn_search = ttk.Button(self.root, text="Buscar", command=self.search_files)
@@ -93,6 +174,8 @@ class FileMoverAppSpecific:
 
         # Colocar widgets en la interfaz
         self.listbox_facturadas.grid(row=1, column=0, padx=10, pady=10, rowspan=3)
+        lbl_facturadas.grid(row=0, column=0, padx=10, pady=10)
+        lbl_nofacturadas.grid(row=0, column=3, padx=10, pady=10)
         btn_right.grid(row=2, column=1, padx=10, pady=10)
         btn_left.grid(row=2, column=2, padx=10, pady=10)
         self.listbox_nofacturadas.grid(row=1, column=3, padx=10, pady=10, rowspan=3)
@@ -105,7 +188,9 @@ class FileMoverAppSpecific:
         btn_borrar_seleccion_nofacturadas.grid(row=3, column=2, padx=10, pady=10)
         btn_seleccionar_todas_facturadas.grid(row=4, column=1, padx=10, pady=10)
         btn_seleccionar_todas_nofacturadas.grid(row=4, column=2, padx=10, pady=10)
-        btn_actualizar.grid(row=12, column=1, padx=10, pady=10)
+        btn_actualizar.grid(row=10, column=3, padx=10, pady=10)
+        btn_seleccionar_facturadas.grid(row=5, column=0, padx=10, pady=10)
+        btn_seleccionar_nofacturadas.grid(row=5, column=3, padx=10, pady=10)
 
         # Configurar scrollbars
         scrollbar_facturadas = Scrollbar(self.root, orient='vertical', command=self.listbox_facturadas.yview)
@@ -134,6 +219,36 @@ class FileMoverAppSpecific:
             for file in files:
                 listbox.insert(tk.END, file)
 
+    def seleccionar_facturadas(self):
+        folder_selected = filedialog.askdirectory()
+        if folder_selected:
+            self.folder_facturadas = folder_selected
+            self.actualizar_lista()
+
+    def seleccionar_nofacturadas(self):
+        folder_selected = filedialog.askdirectory()
+        if folder_selected:
+            self.folder_nofacturadas = folder_selected
+            self.actualizar_lista()
+
+    def load_folders_from_config(self):
+        # Cargar carpetas específicas de Prosegur o Brinks desde la configuración
+        if self.company_name.lower() == "prosegur":
+            self.folder_facturadas = Config.folder_facturadas_prosegur
+            self.folder_nofacturadas = Config.folder_nofacturadas_prosegur
+        elif self.company_name.lower() == "brinks":
+            self.folder_facturadas = Config.folder_facturadas_brinks
+            self.folder_nofacturadas = Config.folder_nofacturadas_brinks
+
+    def save_folders_to_config(self):
+        # Guardar carpetas específicas de Prosegur o Brinks en la configuración
+        if self.company_name.lower() == "prosegur":
+            Config.folder_facturadas_prosegur = self.folder_facturadas
+            Config.folder_nofacturadas_prosegur = self.folder_nofacturadas
+        elif self.company_name.lower() == "brinks":
+            Config.folder_facturadas_brinks = self.folder_facturadas
+            Config.folder_nofacturadas_brinks = self.folder_nofacturadas
+
     def move_files_right(self):
         selected_indices = self.listbox_nofacturadas.curselection()
         for index in selected_indices:
@@ -146,8 +261,9 @@ class FileMoverAppSpecific:
                 # Mover el archivo de "nofacturadas" a "facturadas"
                 shutil.move(file_path, os.path.join(self.folder_facturadas, file_name))
 
-        # Actualizar las listas
+        # Actualizar las listas y guardar cambios
         self.actualizar_lista()
+        self.save_folders_to_config()
 
     def move_files_left(self):
         selected_indices = self.listbox_facturadas.curselection()
@@ -161,8 +277,9 @@ class FileMoverAppSpecific:
                 # Mover el archivo de "facturadas" a "nofacturadas"
                 shutil.move(file_path, os.path.join(self.folder_nofacturadas, file_name))
 
-        # Actualizar las listas
+        # Actualizar las listas y guardar cambios
         self.actualizar_lista()
+        self.save_folders_to_config()
 
     def guardar_cambios(self):
         messagebox.showinfo("HECHO", "Cambios guardados correctamente.")
@@ -195,7 +312,7 @@ class FileMoverAppSpecific:
             files = os.listdir(folder)
 
             # Filtrar archivos por término de búsqueda
-            filtered_files = [file for file in files if search_term in file.lower()]
+            filtered_files = [file for file in files if fnmatch(file.lower(), f'*{search_term}*')]
 
             # Agregar archivos a la lista
             for file in filtered_files:
@@ -255,4 +372,3 @@ root_main = tk.Tk()
 app_main = FileMoverApp(root_main)
 app_main.center_window()  # Llamar a la función para establecer el tamaño y posición de la ventana
 root_main.mainloop()
-

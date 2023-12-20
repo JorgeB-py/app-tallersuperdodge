@@ -1,0 +1,4 @@
+folder_facturadas_prosegur=
+folder_nofacturadas_prosegur=
+folder_facturadas_brinks=
+folder_nofacturadas_brinks=
