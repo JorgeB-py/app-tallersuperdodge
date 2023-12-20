@@ -265,7 +265,7 @@ class FileMoverAppSpecific:
             for file in files:
                 file_path = os.path.join(folder, file)
                 file_date = datetime.fromtimestamp(os.path.getmtime(file_path))
-                formatted_date = file_date.strftime('%Y-%m-%d %H:%M:%S')
+                formatted_date = file_date.strftime('%d-%m-%Y %H:%M:%S')
                 listbox.insert(tk.END, f"{file} ({formatted_date})")
 
     def seleccionar_facturadas(self):
@@ -335,6 +335,11 @@ class FileMoverAppSpecific:
             # Obtener el nombre del archivo seleccionado
             file_name = self.listbox_nofacturadas.get(index)
 
+            date_position = file_name.rfind('(')
+            if date_position != -1:
+                # Eliminar la información de la fecha
+                file_name = file_name[:date_position].strip()
+
             # Verificar si el elemento es un archivo (y no una carpeta)
             file_path = os.path.join(self.folder_nofacturadas, file_name)
             if os.path.isfile(file_path):
@@ -350,6 +355,10 @@ class FileMoverAppSpecific:
         for index in selected_indices:
             # Obtener el nombre del archivo seleccionado
             file_name = self.listbox_facturadas.get(index)
+            date_position = file_name.rfind('(')
+            if date_position != -1:
+                # Eliminar la información de la fecha
+                file_name = file_name[:date_position].strip()
 
             # Verificar si el elemento es un archivo (y no una carpeta)
             file_path = os.path.join(self.folder_facturadas, file_name)
@@ -419,13 +428,22 @@ class FileMoverAppSpecific:
         self.load_files_into_listbox(self.folder_nofacturadas, self.listbox_nofacturadas)
 
     def open_file(self, event):
-        # Obtener el índice del elemento seleccionado
+    # Obtener el índice del elemento seleccionado
         widget = event.widget
         selected_index = widget.curselection()
 
         if selected_index:
             # Obtener el nombre del archivo seleccionado
-            file_name = widget.get(selected_index[0])
+            file_name_with_date = widget.get(selected_index[0])
+
+            # Extraer solo el nombre del archivo sin la información de la fecha
+            file_name, file_extension = os.path.splitext(file_name_with_date)
+
+            # Buscar la posición de la última ocurrencia del patrón de fecha en el nombre del archivo
+            date_position = file_extension.rfind('(')
+            if date_position != -1:
+                # Eliminar la información de la fecha
+                file_extension = file_extension[:date_position].strip()
 
             # Obtener la carpeta correcta según la lista
             if widget is self.listbox_facturadas:
@@ -435,8 +453,8 @@ class FileMoverAppSpecific:
             else:
                 return
 
-            # Abrir el archivo
-            file_path = os.path.join(folder_path, file_name)
+            # Construir la ruta completa al archivo
+            file_path = os.path.join(folder_path, file_name + file_extension)
 
             # Usar el método adecuado según la plataforma para abrir el archivo
             try:
@@ -445,6 +463,7 @@ class FileMoverAppSpecific:
                 # En sistemas no Windows, utilizar 'open' de acuerdo al tipo de archivo
                 import subprocess
                 subprocess.run(['open', file_path], check=True)
+
 
     def center_window(self):
         # Obtener dimensiones de la pantalla
